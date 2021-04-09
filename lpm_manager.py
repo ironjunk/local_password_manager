@@ -14,23 +14,92 @@ from passlib.hash import pbkdf2_sha256
 # func: to create connection to database
 def connection():
 
-    conn = connect("C:\\Users\\ironjunk\\AppData\\Local\\local_pass.db")
+    conn = connect(".\lpm.db")
 
     return conn
 
 # func: check password to access database
-def check_entry(pass_entry):
+def check_status():
 
     conn = connection()
     c = conn.cursor()
 
-    c.execute("select pass from admin limit 1")
+    try:
+        c.execute("select name from sqlite_master where type = 'table' and name = 'admin'")
+
+        if c.fetchone()[0]:
+            return True
+        else:
+            return False
+    
+    except:
+        return False
+
+# func: check password to access database
+def check_master_pass(pass_master):
+
+    conn = connection()
+    c = conn.cursor()
+
+    c.execute("select master_pass from admin limit 1")
     key = c.fetchone()[0]
     conn.close()
 
-    return pbkdf2_sha256.verify(pass_entry, key)
+    return pbkdf2_sha256.verify(pass_master, key)
 
 # ---------- Scope: Database {End} ---------- #
+
+# ---------- Scope: Create {Begin} ---------- #
+
+# func: to create new admin table
+def create_admin_table():
+
+    conn = connection()
+    c = conn.cursor()
+
+    try:
+        c.execute("create table if not exists admin(master_pass text)")
+        conn.commit()
+        conn.close()
+        
+        return True
+    
+    except:
+        print("\nError creating the admin table! Kindly report the issue to the developer.")
+        conn.close()
+        
+        return False
+
+# ---------- Scope: Create {End} ---------- #
+
+# ---------- Scope: Store {Begin} ---------- #
+
+# func: to store the master password
+def store_master_pass(pass_master):
+    
+    if create_admin_table():
+        conn = connection()
+        c = conn.cursor()
+
+        try:
+            c.execute("insert into admin values(?)", (pbkdf2_sha256.hash(pass_master),))
+            conn.commit()
+            conn.close()
+
+            return True
+        
+        except:
+            print("\nError adding the master password to the admin table! Kindly report the issue to the developer.")
+            conn.close()
+        
+            return False
+
+    return False
+
+# ---------- Scope: Store {End} ---------- #
+
+# ---------- Scope: Update {Begin} ---------- #
+# ---------- Scope: Update {End} ---------- #
 
 # ---------- Scope: Generate {Begin} ---------- #
 
@@ -69,32 +138,11 @@ def jumble(gen):
 
 # ---------- Scope: Generate {End} ---------- #
 
-# ---------- Scope: Store {Begin} ---------- #
-# ---------- Scope: Store {End} ---------- #
-
-# ---------- Scope: Update {Begin} ---------- #
-# ---------- Scope: Update {End} ---------- #
-
-
-
-# ---------- Start: Management Functions ---------- #
-
-# func: to store the password
-def store(conn, ):
-    pass
-
-# func: to update the password
-def update():
-    pass
-
-# func: to fetch password
-def fetch():
-    pass
-# ---------- End: Management Functions ---------- #
+# ---------- Scope: Main {Begin} ---------- #
 
 if __name__ == "__main__":
     
-    print("Error : Not a runnable program. \nNote : Run pass_main.py")
+    print("Error : Not a runnable program. \nNote : Run lpm_main.py")
 
 
     # value = input("Enter Value: ")
@@ -102,3 +150,5 @@ if __name__ == "__main__":
     
     # pswd = generate(w, W, d, s)
     # print(pswd)
+
+# ---------- Scope: Main {End} ---------- #
